@@ -1,0 +1,3 @@
+import {getStore,connectLambda} from '@netlify/blobs';
+import {archiveToDrive} from '../../lib/drive-archive.mjs';
+export async function handler(event){connectLambda(event);let input;try{input=JSON.parse(event.body||'{}')}catch{return {statusCode:400}}if(!/^[0-9a-f-]{36}$/.test(input.id||''))return {statusCode:400};const store=getStore({name:'malang-motion'});const job=await store.get('jobs/'+input.id,{type:'json'});if(!job||job.token!==input.token||job.status!=='done')return {statusCode:403};const data=await store.get('results/'+input.id+'.gif',{type:'arrayBuffer'});if(data)await archiveToDrive({id:input.id,gif:Buffer.from(data),store,job});return {statusCode:200}}

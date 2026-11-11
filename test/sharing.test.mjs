@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import QRCode from 'qrcode';
+import {archiveToDrive,DRIVE_FOLDER_ID} from '../lib/drive-archive.mjs';
+test('QR SVG encodes a stored result URL',async()=>{const svg=await QRCode.toString('https://malang-emoticon-festa-2026.netlify.app/result.html?id=11111111-1111-4111-8111-111111111111',{type:'svg'});assert.ok(svg.includes('<svg'));assert.ok(svg.includes('<path'))});
+test('Drive remains explicitly unconfigured without write credentials',async()=>{const job={};await archiveToDrive({id:'x',gif:Buffer.from('GIF89a'),store:{setJSON:async()=>{}},job,url:'',secret:''});assert.equal(job.archiveStatus,'not_configured');assert.equal(DRIVE_FOLDER_ID,'1wsIsRFmxzpC7-qzOIM5cpYqfIY_F2q0p')});
+test('Configured archive sends GIF to Apps Script and records success',async()=>{let request;const job={};await archiveToDrive({id:'x',gif:Buffer.from('GIF89a'),job,store:{setJSON:async()=>{}},url:'https://script.google.com/macros/s/test/exec',secret:'test-only',fetchImpl:async(url,init)=>{request=JSON.parse(init.body);return {ok:true,json:async()=>({ok:true,fileId:'test-file'})}}});assert.equal(request.mimeType,'image/gif');assert.equal(request.secret,'test-only');assert.equal(job.archiveStatus,'saved');assert.equal(job.driveFileId,'test-file')});
+test('Archive failure does not reject a completed result',async()=>{const job={status:'done'};await archiveToDrive({id:'x',gif:Buffer.from('GIF89a'),job,store:{setJSON:async()=>{}},url:'https://script.google.com/macros/s/test/exec',secret:'test-only',fetchImpl:async()=>{throw new Error('network')}});assert.equal(job.status,'done');assert.equal(job.archiveStatus,'failed')});
