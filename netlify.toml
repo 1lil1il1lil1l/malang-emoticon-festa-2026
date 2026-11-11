@@ -6,6 +6,10 @@
   node_bundler = "esbuild"
   external_node_modules = ["sharp"]
   included_files = ["node_modules/@img/sharp-linux-x64/**/*", "node_modules/@img/sharp-libvips-linux-x64/**/*"]
+# 영상 → GIF 변환용 ffmpeg는 실제로 쓰는 함수에만 넣는다 (함수 용량 절약)
+[functions.render-background]
+  external_node_modules = ["sharp"]
+  included_files = ["node_modules/@img/sharp-linux-x64/**/*", "node_modules/@img/sharp-libvips-linux-x64/**/*", "node_modules/@ffmpeg-installer/linux-x64/**/*"]
 [[headers]]
   for = "/*"
   [headers.values]

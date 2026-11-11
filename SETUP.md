@@ -64,7 +64,18 @@ jobs 함수가 작업 번호를 발급하고 render-background 함수가 이미�
 
 공식 참고: https://ai.google.dev/gemini-api/docs/image-generation · https://docs.netlify.com/build/functions/background-functions/
 
-## 현재 모델과 비용
+## 생성 방식: 4초 영상 (기본)
+
+- 기본값은 **Gemini Omni 1.2 Flash로 4초 영상(360p, 16:9)을 만든 뒤 ffmpeg로 360×360 반복 GIF**로 바꾸는 방식입니다. 공식 단가는 360p 초당 $0.023이라 1건(4초)에 약 $0.09입니다.
+- 정사각형 그림을 16:9 흰 화면 가운데에 놓아 보내고, **시작 장면과 끝 장면에 같은 그림**을 넣어 이음매 없이 반복되게 합니다. 결과 영상의 가운데 정사각형만 GIF로 씁니다.
+- 영상 생성은 보통 1~2분 걸립니다. 화면은 최대 약 6분 30초까지 기다립니다.
+- GIF가 4.2MB를 넘으면 초당 장수와 크기를 줄여 다시 만듭니다.
+- 영상이 실패하면 선택한 기본 모션으로 4초 GIF를 대신 만듭니다.
+- 원래 방식(2×2 4컷 이미지 → GIF)으로 되돌리려면 Netlify 환경변수 `GENERATION_MODE=sheet`를 넣고 재배포합니다. 코드를 바꿀 필요는 없습니다.
+- 영상 모델을 바꾸려면 `VIDEO_MODEL` 환경변수를 넣습니다(기본 `gemini-omni-1.2-flash`).
+- ffmpeg는 `@ffmpeg-installer/linux-x64` 패키지로 `render-background` 함수에만 포함됩니다(netlify.toml).
+
+## 현재 모델과 비용 (4컷 방식)
 
 기본 모델은 gemini-3.1-flash-lite-image(Nano Banana 2 Lite)입니다. 기존 GEMINI_API_KEY를 유지합니다. Netlify의 IMAGE_MODEL도 이 값으로 바꾸고 서버 함수까지 재배포해야 적용됩니다.
 

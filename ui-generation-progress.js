@@ -1,7 +1,7 @@
 function createGenerationProgress(doc=document,timers=globalThis,clock=()=>Date.now()){
  const panel=doc.querySelector('#generation-progress'),bar=doc.querySelector('#generation-bar'),title=doc.querySelector('#generation-title'),detail=doc.querySelector('#generation-detail'),counter=doc.querySelector('#generation-count'),elapsed=doc.querySelector('#generation-elapsed'),steps=[...doc.querySelectorAll('.generation-step')];
- const labels=['그림을 준비하고 있어요','캐릭터에 움직임을 그리는 중','3초 이모티콘으로 연결하는 중','작품을 보관하고 QR을 준비하는 중'];
- const notes=['그림과 움직임 아이디어를 확인하고 있어요.','표정과 동작을 4컷으로 그리고 있어요. 잠시만 기다려 주세요.','색감을 살리고 장면 사이를 자연스럽게 다듬고 있어요.','휴대전화로 받아 갈 수 있도록 마무리하고 있어요.'];
+ const labels=['그림을 준비하고 있어요','캐릭터에 움직임을 그리는 중','4초 이모티콘으로 연결하는 중','작품을 보관하고 QR을 준비하는 중'];
+ const notes=['그림과 움직임 아이디어를 확인하고 있어요.','그림이 움직이는 영상을 만들고 있어요. 1~2분쯤 걸려요.','색감을 살리고 장면 사이를 자연스럽게 다듬고 있어요.','휴대전화로 받아 갈 수 있도록 마무리하고 있어요.'];
  let timer=null,started=0,stage=0,progress=0;
  function paint(nextStage,nextProgress,message){stage=Math.max(stage,Math.min(3,nextStage));progress=Math.max(progress,Math.min(100,nextProgress));bar.style.width=progress+'%';bar.parentElement.setAttribute('aria-valuenow',String(progress));title.textContent=message||labels[stage];detail.textContent=notes[stage];counter.textContent=(stage+1)+' / 4';steps.forEach((el,i)=>{el.classList.toggle('active',i===stage);el.classList.toggle('complete',i<stage);el.setAttribute('aria-current',i===stage?'step':'false')})}
  function stop(){if(timer!==null)timers.clearInterval(timer);timer=null;panel.classList.remove('working')}

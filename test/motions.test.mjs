@@ -80,7 +80,7 @@ test('A JPEG sheet from the model is split into a GIF', async () => {
   const store = { get: async (k) => map.get(k), set: async (k, v) => map.set(k, v), setJSON: async (k, v) => map.set(k, structuredClone(v)), delete: async (k) => map.delete(k) };
   const job = { id: 'j-id', token: 't', prompt: MOTIONS.heart.idea, motion: 'heart' };
   let seenMotion;
-  await renderJob({ job, store, generate: async ({ motion }) => { seenMotion = motion; return jpeg; } });
+  await renderJob({ job, store, mode: 'sheet', generate: async ({ motion }) => { seenMotion = motion; return jpeg; } });
   assert.equal(seenMotion, 'heart');
   assert.equal(job.resultMode, 'ai');
   assert.ok(map.has('results/j-id.gif'));

@@ -1,5 +1,6 @@
 import {DEFAULT_IMAGE_MODEL} from '../../lib/image-provider.mjs';
 import {ALLOWED_MOTIONS} from '../../lib/motions.mjs';
+const DEFAULT_VIDEO_MODEL='gemini-omni-1.2-flash';
 import {getStore,connectLambda} from '@netlify/blobs';
 import {randomUUID,randomBytes,timingSafeEqual} from 'node:crypto';
 import QRCode from 'qrcode';
@@ -7,7 +8,7 @@ const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application
 const validId=id=>/^[0-9a-f-]{36}$/.test(id||'');
 export async function handler(event){
  connectLambda(event);const store=getStore({name:'malang-motion'}),q=event.queryStringParameters||{};
- if(q.config)return reply(200,{model:process.env.IMAGE_MODEL||DEFAULT_IMAGE_MODEL,enabled:process.env.AI_ENABLED==='true'&&!!process.env.GEMINI_API_KEY,codeRequired:!!process.env.BOOTH_CODE,driveConfigured:!!(process.env.DRIVE_WEBHOOK_URL&&process.env.DRIVE_WEBHOOK_SECRET)});
+ if(q.config)return reply(200,{mode:process.env.GENERATION_MODE==='sheet'?'sheet':'video',model:process.env.GENERATION_MODE==='sheet'?(process.env.IMAGE_MODEL||DEFAULT_IMAGE_MODEL):(process.env.VIDEO_MODEL||DEFAULT_VIDEO_MODEL),enabled:process.env.AI_ENABLED==='true'&&!!process.env.GEMINI_API_KEY,codeRequired:!!process.env.BOOTH_CODE,driveConfigured:!!(process.env.DRIVE_WEBHOOK_URL&&process.env.DRIVE_WEBHOOK_SECRET)});
  if(event.httpMethod==='GET'){
   if(!validId(q.id))return reply(400,{error:'잘못된 작업 번호입니다.'});
   const job=await store.get('jobs/'+q.id,{type:'json'});if(!job)return reply(404,{error:'결과를 찾을 수 없습니다.'});
@@ -23,10 +24,10 @@ export async function handler(event){
   if(typeof body.gif!=='string'||!/^[A-Za-z0-9+/=]+$/.test(body.gif))return reply(400,{error:'GIF 파일을 확인해 주세요.'});const gif=Buffer.from(body.gif,'base64');
   if(gif.length>4200000||!['GIF89a','GIF87a'].includes(gif.subarray(0,6).toString())||gif.length<20)return reply(400,{error:'GIF 파일을 확인해 주세요.'});
   const width=gif.readUInt16LE(6),height=gif.readUInt16LE(8);if(width>768||height>768||width<1||height<1)return reply(400,{error:'GIF 크기를 확인해 주세요.'});
-  const id=randomUUID(),token=randomBytes(32).toString('hex');const job={id,token,status:'done',progress:100,stage:4,resultMode:'demo',createdAt:new Date().toISOString(),width,height,durationMs:3000,archiveStatus:process.env.DRIVE_WEBHOOK_URL?'pending':'not_configured'};
+  const id=randomUUID(),token=randomBytes(32).toString('hex');const job={id,token,status:'done',progress:100,stage:4,resultMode:'demo',createdAt:new Date().toISOString(),width,height,durationMs:4000,archiveStatus:process.env.DRIVE_WEBHOOK_URL?'pending':'not_configured'};
   await store.set('results/'+id+'.gif',gif);await store.setJSON('jobs/'+id,job);
   if(process.env.DRIVE_WEBHOOK_URL){try{await fetch(base+'/.netlify/functions/archive-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,token})})}catch{job.archiveStatus='failed';await store.setJSON('jobs/'+id,job)}}
-  return reply(201,{id,resultMode:'demo',width,height,durationMs:3000,archiveStatus:job.archiveStatus});
+  return reply(201,{id,resultMode:'demo',width,height,durationMs:4000,archiveStatus:job.archiveStatus});
  }
  if(process.env.AI_ENABLED!=='true'||!process.env.GEMINI_API_KEY)return reply(503,{error:'AI 연결이 아직 준비되지 않았습니다.'});
  if(process.env.BOOTH_CODE){const a=Buffer.from(String(body.code||'')),b=Buffer.from(process.env.BOOTH_CODE);if(a.length!==b.length||!timingSafeEqual(a,b))return reply(403,{error:'체험 코드를 확인해 주세요.'})}
